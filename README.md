@@ -10,12 +10,15 @@ The Swissup Diagnostic module is a tool designed for Magento 2 store owners and 
 
 - **Magento 2 Theme Data:** Display a table of Magento 2 themes to check if no **virtual** themes exist.
 
+- **Fixing the virtual themes**
+
 ## Usage:
 
 Execute the following command to run the diagnostic tool:
 
 ```bash
 bin/magento swissup:info
+bin/magento swissup:info:virtualfix
 ```
 
 ## Installation
