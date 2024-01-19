@@ -15,7 +15,6 @@ use Magento\Framework\Exception\NoSuchEntityException;
 
 class InfoCommand extends Command
 {
-
     /**
      * @var \Magento\Framework\App\State
      */
@@ -32,7 +31,6 @@ class InfoCommand extends Command
         $this->appState = $appState;
     }
 
-
     protected function configure()
     {
         $this->setName('swissup:info')
@@ -45,7 +43,7 @@ class InfoCommand extends Command
             'php_version' => 'php -v | head -n 1 && whereis php',
             'magento_version' => 'php bin/magento --version',
             'composer_version' => 'composer --version && whereis composer',
-            'nginx_apache_user' => 'whoami',
+            'nginx_user' => 'whoami',
         ];
 
         $folderPaths = [
@@ -56,7 +54,6 @@ class InfoCommand extends Command
         ];
 
         try {
-
             // Environment Check commands
 
             foreach ($commands as $key => $value) {
@@ -69,16 +66,16 @@ class InfoCommand extends Command
                 $this->checkFolder($folderPath, $output);
             }
 
+            $output->writeln('_____________________________');
+
             // Output Magento 2 "theme" table data
             $this->outputMagentoThemeData($input, $output);
-
 
             return Command::SUCCESS;
         } catch (\Exception $e) {
             $output->writeln("<error>Error: " . $e->getMessage() . "</error>");
             return Command::FAILURE;
         }
-
 
         return Command::SUCCESS;
     }
