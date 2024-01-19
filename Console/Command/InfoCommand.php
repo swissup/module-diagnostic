@@ -86,22 +86,21 @@ class InfoCommand extends Command
     private function getCommandInfo(InputInterface $input, OutputInterface $output, $command, $description)
     {
         try {
-            $result = null;
-            $exitCode = null;
-            exec($command, $result, $exitCode);
-
+            $result = [];
+    
+            $shellExecute = \Magento\Framework\App\ObjectManager::getInstance()->get(\Magento\Framework\Shell::class);
+            $response = $shellExecute->execute($command, $result);
+            
             $output->writeln("<info>$description</info>");
+            
+            $output->writeln("<comment>$response</comment>");
 
-
-            foreach ($result as $line) {
-                $output->writeln("<comment>$line</comment>");
-            }
             $output->writeln('_____________________________');
-
+    
             return Command::SUCCESS;
         } catch (\Exception $e) {
             $output->writeln("<error>Error running \"$command\" command</error>");
-
+    
             return Command::FAILURE;
         }
     }
