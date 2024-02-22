@@ -4,7 +4,7 @@
         <arguments>
             <argument name="commands" xsi:type="array">
                 <item name="swissupInfoCommand" xsi:type="object">Swissup\Diagnostic\Console\Command\InfoCommand</item>
-                <item name="swissupInfoVirtualfixCommand" xsi:type="object">Swissup\Diagnostic\Console\Command\InfoVirtualFixCommand</item>
+                <item name="swissupInfoVirtualfixCommand" xsi:type="object">Swissup\Diagnostic\Console\Command\InfoVirtualfixCommand</item>
             </argument>
         </arguments>
     </type>

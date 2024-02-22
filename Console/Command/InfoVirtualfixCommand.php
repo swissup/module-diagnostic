@@ -9,7 +9,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Magento\Theme\Model\ResourceModel\Theme\CollectionFactory;
 use Psr\Log\LoggerInterface;
 
-class InfoVirtualFixCommand extends Command
+class InfoVirtualfixCommand extends Command
 {
     private CollectionFactory $collectionFactory;
     private LoggerInterface $logger;
