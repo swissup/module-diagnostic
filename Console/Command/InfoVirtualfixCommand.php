@@ -42,12 +42,12 @@ class InfoVirtualfixCommand extends Command
             $output->writeln('<info>Executing swissup:info:virtualfix command...</info>');
             $output->writeln('<info>Virtual fix operations completed.</info>');
 
-            return Command::SUCCESS;
+            return Cli::RETURN_SUCCESS;
         } catch (\Exception $e) {
             $this->logger->error('Error fixing virtual themes: ' . $e->getMessage());
             $output->writeln('<error>Error fixing virtual themes: ' . $e->getMessage() . '</error>');
 
-            return Command::FAILURE;
+            return Cli::RETURN_FAILURE;
         }
     }
 }

@@ -8,6 +8,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Helper\Table;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
+use Magento\Framework\Console\Cli;
 use Magento\Framework\App\State;
 use Magento\Framework\App\Bootstrap;
 use Magento\Framework\Exception\LocalizedException;
@@ -71,13 +72,13 @@ class InfoCommand extends Command
             // Output Magento 2 "theme" table data
             $this->outputMagentoThemeData($input, $output);
 
-            return Command::SUCCESS;
+            return Cli::RETURN_SUCCESS;
         } catch (\Exception $e) {
             $output->writeln("<error>Error: " . $e->getMessage() . "</error>");
-            return Command::FAILURE;
+            return Cli::RETURN_FAILURE;
         }
 
-        return Command::SUCCESS;
+        return Cli::RETURN_SUCCESS;
     }
 
     private function getCommandInfo(InputInterface $input, OutputInterface $output, $command, $description)
@@ -94,11 +95,11 @@ class InfoCommand extends Command
 
             $output->writeln('_____________________________');
     
-            return Command::SUCCESS;
+            return Cli::RETURN_SUCCESS;
         } catch (\Exception $e) {
             $output->writeln("<error>Error running \"$command\" command</error>");
     
-            return Command::FAILURE;
+            return Cli::RETURN_FAILURE;
         }
     }
 
