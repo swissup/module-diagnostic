@@ -32,12 +32,31 @@ class InfoCommand extends Command
         $this->appState = $appState;
     }
 
+    /**
+     * Configures the command with a name and description.
+     *
+     * @return void
+     */
     protected function configure()
     {
         $this->setName('swissup:info')
              ->setDescription('Store environment information');
     }
 
+    /**
+     * Executes the Swissup info command.
+     *
+     * This function is responsible for gathering and displaying store environment information.
+     * It checks the environment using a set of predefined commands and folder paths.
+     * It also outputs Magento 2 theme table data.
+     *
+     * @param InputInterface $input The input interface instance.
+     * @param OutputInterface $output The output interface instance.
+     *
+     * @throws \Exception If an error occurs during execution.
+     *
+     * @return int Cli::RETURN_SUCCESS if execution is successful, Cli::RETURN_FAILURE otherwise.
+     */
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         $commands = [
@@ -81,6 +100,15 @@ class InfoCommand extends Command
         return Cli::RETURN_SUCCESS;
     }
 
+    /**
+     * Executes a given command and outputs the result to the console.
+     *
+     * @param InputInterface $input The input interface.
+     * @param OutputInterface $output The output interface.
+     * @param string $command The command to execute.
+     * @param string $description The description of the command.
+     * @return int The return value indicating the success or failure of the command.
+     */
     private function getCommandInfo(InputInterface $input, OutputInterface $output, $command, $description)
     {
         try {
@@ -103,6 +131,13 @@ class InfoCommand extends Command
         }
     }
 
+    /**
+     * Checks if a given folder is empty.
+     *
+     * @param string $folderPath The path to the folder to check.
+     * @throws \Exception If an error occurs while checking the folder contents.
+     * @return bool True if the folder is empty, false otherwise.
+     */
     private function isFolderEmpty($folderPath)
     {
         try {
@@ -115,6 +150,14 @@ class InfoCommand extends Command
         }
     }
 
+    /**
+     * Checks if a given folder is empty and outputs an error message if it's not.
+     *
+     * @param string $folderPath The path to the folder to be checked.
+     * @param OutputInterface $output The output interface to write the error message.
+     * @throws \Exception If an error occurs while checking the folder.
+     * @return void
+     */
     private function checkFolder($folderPath, OutputInterface $output)
     {
         try {
@@ -127,6 +170,14 @@ class InfoCommand extends Command
         }
     }
 
+    /**
+     * Outputs the Magento 2 "theme" table data to the console.
+     *
+     * @param InputInterface $input The input interface.
+     * @param OutputInterface $output The output interface.
+     * @throws \Exception If an error occurs while retrieving the theme data.
+     * @return void
+     */
     private function outputMagentoThemeData(InputInterface $input, OutputInterface $output)
     {
         $this->initMagento();
@@ -165,6 +216,12 @@ class InfoCommand extends Command
         $table->render();
     }
 
+    /**
+     * Initializes the Magento environment by bootstrapping and setting the area code.
+     *
+     * @throws \Exception If an error occurs during initialization.
+     * @return void
+     */
     private function initMagento()
     {
         // Bootstrap Magento to initialize the environment
