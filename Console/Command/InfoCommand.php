@@ -7,6 +7,7 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Helper\Table;
 use Symfony\Component\Console\Style\SymfonyStyle;
+use Symfony\Component\Console\Formatter\OutputFormatterStyle;
 use Magento\Framework\Console\Cli;
 use Magento\Framework\App\State;
 use Magento\Framework\App\Bootstrap;
@@ -31,48 +32,106 @@ class InfoCommand extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
+        // Initialize custom styles
+        $this->initializeCustomStyles($output);
+        
         try {
+            $this->displayWelcomeBanner($output);
             $this->outputEnvironmentInfo($input, $output);
             $this->checkClientOverrides($output);
             $this->outputDatabaseInfo($output);
             $this->outputBackendUrl($output);
             $this->outputMagentoThemeData($input, $output);
+            $this->displayCompletionBanner($output);
 
             return Cli::RETURN_SUCCESS;
         } catch (\Exception $e) {
-            $output->writeln("<error>Error: " . $e->getMessage() . "</error>");
+            $output->writeln("<fg=red>❌ Error: " . $e->getMessage() . "</>");
             return Cli::RETURN_FAILURE;
         }
     }
 
+    private function initializeCustomStyles(OutputInterface $output)
+    {
+        $outputFormatter = $output->getFormatter();
+        $outputFormatter->setStyle('header', new OutputFormatterStyle('cyan', null, ['bold']));
+        $outputFormatter->setStyle('success', new OutputFormatterStyle('green', null, ['bold']));
+        $outputFormatter->setStyle('warning', new OutputFormatterStyle('yellow', null, ['bold']));
+        $outputFormatter->setStyle('highlight', new OutputFormatterStyle('white', 'blue', ['bold']));
+    }
+    
+    private function displayWelcomeBanner(OutputInterface $output)
+    {
+        $output->writeln('');
+        $output->writeln('<fg=cyan>┌─────────────────────────────────────────────────────────────┐</>');
+        $output->writeln('<fg=cyan>│</> <fg=white;bg=blue>              🔍 SWISSUP DIAGNOSTIC TOOL              </> <fg=cyan>│</>');
+        $output->writeln('<fg=cyan>│</> <fg=white;bg=blue>           Analyzing Magento 2 Environment           </> <fg=cyan>│</>');
+        $output->writeln('<fg=cyan>└─────────────────────────────────────────────────────────────┘</>');
+        $output->writeln('');
+    }
+    
+    private function displayCompletionBanner(OutputInterface $output)
+    {
+        $output->writeln('');
+        $output->writeln('<fg=green>✅ Diagnostic analysis completed successfully!</>');
+        $output->writeln('<fg=cyan>━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</>');
+        $output->writeln('');
+    }
+
     private function outputEnvironmentInfo(InputInterface $input, OutputInterface $output)
     {
+        $this->displaySectionHeader($output, '🔧 ENVIRONMENT INFORMATION', 'server');
+        
         $commands = [
-            'php_version' => 'php -v | head -n 1 && whereis php',
-            'magento_version' => 'php bin/magento --version',
-            'composer_version' => 'composer --version && whereis composer',
-            'nginx_user' => 'whoami',
+            'php_version' => ['command' => 'php -v | head -n 1 && whereis php', 'icon' => '🐘', 'title' => 'PHP Version'],
+            'magento_version' => ['command' => 'php bin/magento --version', 'icon' => '🛍️', 'title' => 'Magento Version'],
+            'composer_version' => ['command' => 'composer --version && whereis composer', 'icon' => '📦', 'title' => 'Composer Version'],
+            'nginx_user' => ['command' => 'whoami', 'icon' => '👤', 'title' => 'System User'],
         ];
 
-        foreach ($commands as $key => $command) {
-            $this->getCommandInfo($input, $output, $command, ucfirst(str_replace('_', ' ', $key)) . ':');
+        foreach ($commands as $key => $data) {
+            $this->getCommandInfo($input, $output, $data['command'], $data['icon'] . ' ' . $data['title']);
         }
+        
+        $this->displaySectionSeparator($output);
+    }
+
+    private function displaySectionHeader(OutputInterface $output, string $title, string $icon = '')
+    {
+        $output->writeln('');
+        $output->writeln("<header>╭─── $title ───╮</>");
+        $output->writeln('');
+    }
+    
+    private function displaySectionSeparator(OutputInterface $output)
+    {
+        $output->writeln('<fg=cyan>─────────────────────────────────────────────────────────────</>');
+        $output->writeln('');
     }
 
     private function checkClientOverrides(OutputInterface $output)
     {
+        $this->displaySectionHeader($output, '📂 FOLDER STRUCTURE CHECK');
+        
         $folderPaths = [
-            'app/code/Swissup/',
-            'app/design/frontend/Swissup/',
-            'app/code/Magento/',
-            'app/design/frontend/Magento/',
+            ['path' => 'app/code/Swissup/', 'type' => 'Swissup Modules', 'icon' => '🏗️'],
+            ['path' => 'app/design/frontend/Swissup/', 'type' => 'Swissup Themes', 'icon' => '🎨'],
+            ['path' => 'app/code/Magento/', 'type' => 'Core Modules', 'icon' => '⚙️'],
+            ['path' => 'app/design/frontend/Magento/', 'type' => 'Core Themes', 'icon' => '🎭'],
         ];
 
-        foreach ($folderPaths as $folderPath) {
-            $this->checkFolder($folderPath, $output);
+        $hasOverrides = false;
+        foreach ($folderPaths as $folder) {
+            if ($this->checkFolder($folder['path'], $output, $folder['icon'], $folder['type'])) {
+                $hasOverrides = true;
+            }
+        }
+        
+        if (!$hasOverrides) {
+            $output->writeln('<success>✅ No override folders detected - system integrity maintained</success>');
         }
 
-        $output->writeln('_____________________________');
+        $this->displaySectionSeparator($output);
     }
 
     private function getCommandInfo(InputInterface $input, OutputInterface $output, $command, $description)
@@ -82,13 +141,18 @@ class InfoCommand extends Command
             $shellExecute = \Magento\Framework\App\ObjectManager::getInstance()->get(\Magento\Framework\Shell::class);
             $response = $shellExecute->execute($command, $result);
             
-            $output->writeln("<info>$description</info>");
-            $output->writeln("<comment>$response</comment>");
-            $output->writeln('_____________________________');
+            $output->writeln("<header>  $description</>");
+            $lines = explode("\n", trim($response));
+            foreach ($lines as $line) {
+                if (trim($line)) {
+                    $output->writeln("    <fg=white>│</> <comment>" . trim($line) . "</comment>");
+                }
+            }
+            $output->writeln('');
 
             return Cli::RETURN_SUCCESS;
         } catch (\Exception $e) {
-            $output->writeln("<error>Error running \"$command\" command</error>");
+            $output->writeln("    <fg=red>│</> <fg=red>❌ Error running \"$command\" command</>");
             return Cli::RETURN_FAILURE;
         }
     }
@@ -104,46 +168,81 @@ class InfoCommand extends Command
         }
     }
 
-    private function checkFolder($folderPath, OutputInterface $output)
+    private function checkFolder($folderPath, OutputInterface $output, $icon = '📁', $type = '')
     {
         try {
             if (!$this->isFolderEmpty($folderPath)) {
-                $output->writeln("<error>The folder \"$folderPath\" is not empty.</error>");
+                $output->writeln("    <fg=red>│</> <warning>⚠️  $icon $type override detected: <fg=yellow>$folderPath</></warning>");
+                return true;
+            } else {
+                $output->writeln("    <fg=green>│</> <success>✅ $icon $type: Clean</success>");
+                return false;
             }
         } catch (\Exception $e) {
-            // $output->writeln("<comment>Skipped checking folder \"$folderPath\": " . $e->getMessage() . "</comment>");
+            $output->writeln("    <fg=cyan>│</> <fg=cyan>ℹ️  $icon $type: Not found (expected)</>");
+            return false;
         }
     }
 
     private function outputMagentoThemeData(InputInterface $input, OutputInterface $output)
     {
+        $this->displaySectionHeader($output, '🎨 MAGENTO THEMES ANALYSIS');
+        
         $this->initMagento();
 
         $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
         $themeCollection = $objectManager->create(\Magento\Theme\Model\ResourceModel\Theme\Collection::class);
         $themes = $themeCollection->getData();
 
-        $output->writeln('<info>Magento 2 Theme Table Data:</info>');
-
         if (empty($themes)) {
-            $output->writeln('<comment>No themes found</comment>');
+            $output->writeln('    <fg=cyan>│</> <comment>ℹ️  No themes found</comment>');
+            $this->displaySectionSeparator($output);
             return;
         }
 
         $table = new Table($output);
-        $table->setHeaders(['ID', 'Parent ID', 'Theme Title', 'Type']);
+        $table->setHeaders([
+            '<header>ID</header>', 
+            '<header>Parent ID</header>', 
+            '<header>Theme Title</header>', 
+            '<header>Type</header>',
+            '<header>Status</header>'
+        ]);
+        $table->setStyle('box-double');
+        $table->setColumnWidth(0, 4);
+        $table->setColumnWidth(1, 11);
+        $table->setColumnWidth(2, 25);
+        $table->setColumnWidth(3, 6);
+        $table->setColumnWidth(4, 13);
 
+        $virtualThemesCount = 0;
         foreach ($themes as $theme) {
-            $style = $theme['type'] == 1 ? 'error' : 'info';
+            $isVirtual = $theme['type'] == 1;
+            if ($isVirtual) $virtualThemesCount++;
+            
+            $statusIcon = $isVirtual ? '❌ Virtual' : '✅ Physical';
+            $style = $isVirtual ? 'fg=red' : 'fg=green';
+            
             $table->addRow([
                 "<$style>{$theme['theme_id']}</$style>",
-                "<$style>{$theme['parent_id']}</$style>",
+                "<$style>" . ($theme['parent_id'] ?: 'N/A') . "</$style>",
                 "<$style>{$theme['theme_title']}</$style>",
-                "<$style>{$theme['type']}</$style>"
+                "<$style>{$theme['type']}</$style>",
+                "<$style>$statusIcon</$style>"
             ]);
         }
 
         $table->render();
+        
+        if ($virtualThemesCount > 0) {
+            $output->writeln('');
+            $output->writeln("    <warning>⚠️  Found $virtualThemesCount virtual theme(s) - use 'swissup:info:virtualfix' to fix</warning>");
+        } else {
+            $output->writeln('');
+            $output->writeln('    <success>✅ All themes are properly configured</success>');
+        }
+        
+        $this->displaySectionSeparator($output);
     }
 
     private function initMagento()
@@ -177,27 +276,50 @@ class InfoCommand extends Command
 
     private function outputDatabaseInfo(OutputInterface $output)
     {
+        $this->displaySectionHeader($output, '🗄️ DATABASE CONFIGURATION');
+        
         $dbInfo = $this->getDatabaseInfo();
-        $output->writeln('<info>Database Information:</info>');
-        $output->writeln("<comment>Database Name: {$dbInfo['dbname']}</comment>");
-        $output->writeln("<comment>Database User: {$dbInfo['username']}</comment>");
-        $output->writeln("<comment>Database Host: {$dbInfo['host']}</comment>");
-        $output->writeln("<comment>Database Password: {$dbInfo['password']}</comment>");
+        
+        $dbData = [
+            ['🏷️  Database Name', $dbInfo['dbname']],
+            ['👤  Username', $dbInfo['username']],
+            ['🌐  Host', $dbInfo['host']],
+            ['🔑  Password', $dbInfo['password']]
+        ];
+        
+        $table = new Table($output);
+        $table->setHeaders(['<header>Property</header>', '<header>Value</header>']);
+        $table->setStyle('box-double');
+        $table->setColumnWidth(0, 20);
+        $table->setColumnWidth(1, 25);
+        
+        foreach ($dbData as $row) {
+            $table->addRow(["<fg=cyan>{$row[0]}</>", "<comment>{$row[1]}</comment>"]);
+        }
+        
+        $table->render();
 
         $mysqlCommand = "mysql -h '{$dbInfo['host']}' --database='{$dbInfo['dbname']}' -u '{$dbInfo['username']}' -p";
-        $output->writeln("\n<info>MySQL Connection Command:</info>");
-        $output->writeln("<comment>$mysqlCommand</comment>");
-        $output->writeln('_____________________________');
+        $output->writeln('');
+        $output->writeln('    <header>💻 MySQL Connection Command:</header>');
+        $output->writeln("    <fg=white>│</> <highlight>$mysqlCommand</highlight>");
+        
+        $this->displaySectionSeparator($output);
     }
 
     private function outputBackendUrl(OutputInterface $output)
     {
+        $this->displaySectionHeader($output, '🔗 ADMIN ACCESS');
+        
         $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
         $backendUrl = $objectManager->get(\Magento\Backend\Model\UrlInterface::class);
         $adminUrl = $backendUrl->getBaseUrl() . $backendUrl->getAreaFrontName();
 
-        $output->writeln('<info>Backend URL:</info>');
-        $output->writeln("<comment>$adminUrl</comment>");
-        $output->writeln('_____________________________');
+        $output->writeln('    <header>🏪 Admin Panel URL:</header>');
+        $output->writeln("    <fg=white>│</> <highlight>$adminUrl</highlight>");
+        $output->writeln('');
+        $output->writeln('    <fg=cyan>💡 Click the URL above to access your Magento admin panel</fg=cyan>');
+        
+        $this->displaySectionSeparator($output);
     }
 }
