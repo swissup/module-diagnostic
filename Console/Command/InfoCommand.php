@@ -258,20 +258,22 @@ class InfoCommand extends Command
 
     private function getDatabaseInfo()
     {
-        $envFile = BP . '/app/etc/env.php';
-        if (file_exists($envFile)) {
-            $env = include $envFile;
-            if (isset($env['db']['connection']['default'])) {
-                $dbConfig = $env['db']['connection']['default'];
-                return [
-                    'dbname' => $dbConfig['dbname'] ?? 'N/A',
-                    'username' => $dbConfig['username'] ?? 'N/A',
-                    'host' => $dbConfig['host'] ?? 'N/A',
-                    'password' => $dbConfig['password'] ?? 'N/A'
-                ];
-            }
+        try {
+            $deploymentConfig = 
+                \Magento\Framework\App\ObjectManager::getInstance()->get(
+                    \Magento\Framework\App\DeploymentConfig::class
+                );
+            $dbConfig = (array) $deploymentConfig->get('db/connection/default');
+        } catch (\Throwable $exception) {
+            $dbConfig = [];
         }
-        return ['dbname' => 'N/A', 'username' => 'N/A', 'host' => 'N/A', 'password' => 'N/A'];
+
+        return [
+            'dbname' => $dbConfig['dbname'] ?? 'N/A',
+            'username' => $dbConfig['username'] ?? 'N/A',
+            'host' => $dbConfig['host'] ?? 'N/A',
+            'password' => $dbConfig['password'] ?? 'N/A'
+        ];
     }
 
     private function outputDatabaseInfo(OutputInterface $output)
