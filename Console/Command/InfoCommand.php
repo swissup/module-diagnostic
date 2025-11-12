@@ -2,19 +2,17 @@
 
 namespace Swissup\Diagnostic\Console\Command;
 
-use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Helper\Table;
 use Symfony\Component\Console\Style\SymfonyStyle;
-use Symfony\Component\Console\Formatter\OutputFormatterStyle;
 use Magento\Framework\Console\Cli;
 use Magento\Framework\App\State;
 use Magento\Framework\App\Bootstrap;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
 
-class InfoCommand extends Command
+class InfoCommand extends AbstractStyledCommand
 {
     private $appState;
 
@@ -36,46 +34,19 @@ class InfoCommand extends Command
         $this->initializeCustomStyles($output);
         
         try {
-            $this->displayWelcomeBanner($output);
+            $this->displayWelcomeBanner($output, '🔍 SWISSUP DIAGNOSTIC TOOL', 'Analyzing Magento 2 Environment');
             $this->outputEnvironmentInfo($input, $output);
             $this->checkClientOverrides($output);
             $this->outputDatabaseInfo($output);
             $this->outputBackendUrl($output);
             $this->outputMagentoThemeData($input, $output);
-            $this->displayCompletionBanner($output);
+            $this->displaySuccessBanner($output, 'Diagnostic analysis completed successfully!');
 
             return Cli::RETURN_SUCCESS;
         } catch (\Exception $e) {
             $output->writeln("<fg=red>❌ Error: " . $e->getMessage() . "</>");
             return Cli::RETURN_FAILURE;
         }
-    }
-
-    private function initializeCustomStyles(OutputInterface $output)
-    {
-        $outputFormatter = $output->getFormatter();
-        $outputFormatter->setStyle('header', new OutputFormatterStyle('cyan', null, ['bold']));
-        $outputFormatter->setStyle('success', new OutputFormatterStyle('green', null, ['bold']));
-        $outputFormatter->setStyle('warning', new OutputFormatterStyle('yellow', null, ['bold']));
-        $outputFormatter->setStyle('highlight', new OutputFormatterStyle('white', 'blue', ['bold']));
-    }
-    
-    private function displayWelcomeBanner(OutputInterface $output)
-    {
-        $output->writeln('');
-        $output->writeln('<fg=cyan>┌─────────────────────────────────────────────────────────────┐</>');
-        $output->writeln('<fg=cyan>│</> <fg=white;bg=blue>              🔍 SWISSUP DIAGNOSTIC TOOL              </> <fg=cyan>│</>');
-        $output->writeln('<fg=cyan>│</> <fg=white;bg=blue>           Analyzing Magento 2 Environment           </> <fg=cyan>│</>');
-        $output->writeln('<fg=cyan>└─────────────────────────────────────────────────────────────┘</>');
-        $output->writeln('');
-    }
-    
-    private function displayCompletionBanner(OutputInterface $output)
-    {
-        $output->writeln('');
-        $output->writeln('<fg=green>✅ Diagnostic analysis completed successfully!</>');
-        $output->writeln('<fg=cyan>━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</>');
-        $output->writeln('');
     }
 
     private function outputEnvironmentInfo(InputInterface $input, OutputInterface $output)
@@ -94,19 +65,6 @@ class InfoCommand extends Command
         }
         
         $this->displaySectionSeparator($output);
-    }
-
-    private function displaySectionHeader(OutputInterface $output, string $title, string $icon = '')
-    {
-        $output->writeln('');
-        $output->writeln("<header>╭─── $title ───╮</>");
-        $output->writeln('');
-    }
-    
-    private function displaySectionSeparator(OutputInterface $output)
-    {
-        $output->writeln('<fg=cyan>─────────────────────────────────────────────────────────────</>');
-        $output->writeln('');
     }
 
     private function checkClientOverrides(OutputInterface $output)

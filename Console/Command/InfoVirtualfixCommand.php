@@ -2,16 +2,14 @@
 
 namespace Swissup\Diagnostic\Console\Command;
 
-use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
-use Symfony\Component\Console\Formatter\OutputFormatterStyle;
 use Symfony\Component\Console\Helper\Table;
 use Magento\Framework\Console\Cli;
 use Magento\Theme\Model\ResourceModel\Theme\CollectionFactory;
 use Psr\Log\LoggerInterface;
 
-class InfoVirtualfixCommand extends Command
+class InfoVirtualfixCommand extends AbstractStyledCommand
 {
     private CollectionFactory $collectionFactory;
     private LoggerInterface $logger;
@@ -36,7 +34,7 @@ class InfoVirtualfixCommand extends Command
         // Initialize custom styles
         $this->initializeCustomStyles($output);
         
-        $this->displayWelcomeBanner($output);
+        $this->displayWelcomeBanner($output, '🔧 VIRTUAL THEME FIXER', 'Fixing Virtual Theme Issues');
 
         try {
             $this->displayVirtualThemesBefore($output);
@@ -51,25 +49,6 @@ class InfoVirtualfixCommand extends Command
         }
     }
 
-    private function initializeCustomStyles(OutputInterface $output)
-    {
-        $outputFormatter = $output->getFormatter();
-        $outputFormatter->setStyle('header', new OutputFormatterStyle('cyan', null, ['bold']));
-        $outputFormatter->setStyle('success', new OutputFormatterStyle('green', null, ['bold']));
-        $outputFormatter->setStyle('warning', new OutputFormatterStyle('yellow', null, ['bold']));
-        $outputFormatter->setStyle('highlight', new OutputFormatterStyle('white', 'blue', ['bold']));
-    }
-    
-    private function displayWelcomeBanner(OutputInterface $output)
-    {
-        $output->writeln('');
-        $output->writeln('<fg=cyan>┌─────────────────────────────────────────────────────────────┐</>');
-        $output->writeln('<fg=cyan>│</> <fg=white;bg=blue>             🔧 VIRTUAL THEME FIXER              </> <fg=cyan>│</>');
-        $output->writeln('<fg=cyan>│</> <fg=white;bg=blue>          Fixing Virtual Theme Issues            </> <fg=cyan>│</>');
-        $output->writeln('<fg=cyan>└─────────────────────────────────────────────────────────────┘</>');
-        $output->writeln('');
-    }
-    
     private function displayVirtualThemesBefore(OutputInterface $output)
     {
         $output->writeln('<header>╭─── 🔍 SCANNING FOR VIRTUAL THEMES ───╮</header>');

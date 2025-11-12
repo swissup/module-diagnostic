@@ -2,11 +2,9 @@
 
 namespace Swissup\Diagnostic\Console\Command;
 
-use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
-use Symfony\Component\Console\Formatter\OutputFormatterStyle;
 use Symfony\Component\Console\Helper\Table;
 use Magento\Framework\Console\Cli;
 use Magento\Framework\App\Config\Storage\WriterInterface;
@@ -14,7 +12,7 @@ use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Framework\App\Cache\TypeListInterface;
 use Magento\Store\Model\ScopeInterface;
 
-class AssetsCommand extends Command
+class AssetsCommand extends AbstractStyledCommand
 {
     private WriterInterface $configWriter;
     private ScopeConfigInterface $scopeConfig;
@@ -95,7 +93,7 @@ class AssetsCommand extends Command
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         $this->initializeCustomStyles($output);
-        $this->displayWelcomeBanner($output);
+        $this->displayWelcomeBanner($output, '⚡ ASSETS OPTIMIZATION MANAGER', 'JS/CSS Merge & Minification Control');
 
         try {
             $hasChanges = false;
@@ -120,7 +118,7 @@ class AssetsCommand extends Command
 
             if ($hasChanges) {
                 $this->cleanCache($output);
-                $this->displaySuccessBanner($output);
+                $this->displaySuccessBanner($output, 'Configuration updated successfully!');
             }
 
             return Cli::RETURN_SUCCESS;
@@ -128,33 +126,6 @@ class AssetsCommand extends Command
             $output->writeln("<fg=red>❌ Error: " . $e->getMessage() . "</>");
             return Cli::RETURN_FAILURE;
         }
-    }
-
-    private function initializeCustomStyles(OutputInterface $output)
-    {
-        $outputFormatter = $output->getFormatter();
-        $outputFormatter->setStyle('header', new OutputFormatterStyle('cyan', null, ['bold']));
-        $outputFormatter->setStyle('success', new OutputFormatterStyle('green', null, ['bold']));
-        $outputFormatter->setStyle('warning', new OutputFormatterStyle('yellow', null, ['bold']));
-        $outputFormatter->setStyle('highlight', new OutputFormatterStyle('white', 'blue', ['bold']));
-    }
-
-    private function displayWelcomeBanner(OutputInterface $output)
-    {
-        $output->writeln('');
-        $output->writeln('<fg=cyan>┌─────────────────────────────────────────────────────────────┐</>');
-        $output->writeln('<fg=cyan>│</> <fg=white;bg=blue>           ⚡ ASSETS OPTIMIZATION MANAGER          </> <fg=cyan>│</>');
-        $output->writeln('<fg=cyan>│</> <fg=white;bg=blue>         JS/CSS Merge & Minification Control       </> <fg=cyan>│</>');
-        $output->writeln('<fg=cyan>└─────────────────────────────────────────────────────────────┘</>');
-        $output->writeln('');
-    }
-
-    private function displaySuccessBanner(OutputInterface $output)
-    {
-        $output->writeln('');
-        $output->writeln('<fg=green>✅ Configuration updated successfully!</>');
-        $output->writeln('<fg=cyan>━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</>');
-        $output->writeln('');
     }
 
     private function processIndividualSettings(InputInterface $input, OutputInterface $output): bool
