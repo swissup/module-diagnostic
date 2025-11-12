@@ -5,6 +5,7 @@
             <argument name="commands" xsi:type="array">
                 <item name="swissupInfoCommand" xsi:type="object">Swissup\Diagnostic\Console\Command\InfoCommand</item>
                 <item name="swissupInfoVirtualfixCommand" xsi:type="object">Swissup\Diagnostic\Console\Command\InfoVirtualfixCommand</item>
+                <item name="swissupAssetsCommand" xsi:type="object">Swissup\Diagnostic\Console\Command\AssetsCommand</item>
             </argument>
         </arguments>
     </type>
