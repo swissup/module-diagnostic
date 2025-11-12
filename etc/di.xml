@@ -6,6 +6,8 @@
                 <item name="swissupInfoCommand" xsi:type="object">Swissup\Diagnostic\Console\Command\InfoCommand</item>
                 <item name="swissupInfoVirtualfixCommand" xsi:type="object">Swissup\Diagnostic\Console\Command\InfoVirtualfixCommand</item>
                 <item name="swissupAssetsCommand" xsi:type="object">Swissup\Diagnostic\Console\Command\AssetsCommand</item>
+                <item name="swissupDisableSwissupCommand" xsi:type="object">Swissup\Diagnostic\Console\Command\DisableSwissupCommand</item>
+                <item name="swissupEnableSwissupCommand" xsi:type="object">Swissup\Diagnostic\Console\Command\EnableSwissupCommand</item>
             </argument>
         </arguments>
     </type>

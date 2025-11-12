@@ -14,6 +14,8 @@ The Swissup Diagnostic module is a tool designed for Magento 2 store owners and 
 
 - **Assets Optimization Manager:** Enable/disable JS and CSS merge and minification settings.
 
+- **Module Management:** Disable/enable all Swissup modules while preserving their original state.
+
 ## Usage:
 
 Execute the following commands to use the diagnostic tools:
@@ -41,6 +43,12 @@ bin/magento swissup:info:assets --bundle-js=1 --minify-html=1
 
 # Disable specific settings
 bin/magento swissup:info:assets --merge-css=0 --minify-js=0
+
+# Disable all currently enabled Swissup modules (saves state for later restoration)
+bin/magento swissup:info:disable-swissup
+
+# Enable previously disabled Swissup modules (restores original state)
+bin/magento swissup:info:enable-swissup
 ```
 
 ## Installation
