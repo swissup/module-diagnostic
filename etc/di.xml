@@ -8,6 +8,8 @@
                 <item name="swissupAssetsCommand" xsi:type="object">Swissup\Diagnostic\Console\Command\AssetsCommand</item>
                 <item name="swissupDisableSwissupCommand" xsi:type="object">Swissup\Diagnostic\Console\Command\DisableSwissupCommand</item>
                 <item name="swissupEnableSwissupCommand" xsi:type="object">Swissup\Diagnostic\Console\Command\EnableSwissupCommand</item>
+                <item name="swissupDisableThirdpartyCommand" xsi:type="object">Swissup\Diagnostic\Console\Command\DisableThirdpartyCommand</item>
+                <item name="swissupEnableThirdpartyCommand" xsi:type="object">Swissup\Diagnostic\Console\Command\EnableThirdpartyCommand</item>
             </argument>
         </arguments>
     </type>
