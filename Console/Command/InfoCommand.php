@@ -5,21 +5,30 @@ namespace Swissup\Diagnostic\Console\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Helper\Table;
-use Symfony\Component\Console\Style\SymfonyStyle;
 use Magento\Framework\Console\Cli;
-use Magento\Framework\App\State;
-use Magento\Framework\App\Bootstrap;
-use Magento\Framework\Exception\LocalizedException;
-use Magento\Framework\Exception\NoSuchEntityException;
+use Magento\Framework\Shell;
+use Magento\Framework\App\DeploymentConfig;
+use Magento\Backend\Model\UrlInterface as BackendUrlInterface;
+use Magento\Theme\Model\ResourceModel\Theme\CollectionFactory as ThemeCollectionFactory;
 
 class InfoCommand extends AbstractStyledCommand
 {
-    private $appState;
+    private Shell $shell;
+    private DeploymentConfig $deploymentConfig;
+    private BackendUrlInterface $backendUrl;
+    private ThemeCollectionFactory $themeCollectionFactory;
 
-    public function __construct(State $appState)
-    {
+    public function __construct(
+        Shell $shell,
+        DeploymentConfig $deploymentConfig,
+        BackendUrlInterface $backendUrl,
+        ThemeCollectionFactory $themeCollectionFactory
+    ) {
         parent::__construct();
-        $this->appState = $appState;
+        $this->shell = $shell;
+        $this->deploymentConfig = $deploymentConfig;
+        $this->backendUrl = $backendUrl;
+        $this->themeCollectionFactory = $themeCollectionFactory;
     }
 
     protected function configure()
@@ -51,7 +60,7 @@ class InfoCommand extends AbstractStyledCommand
 
     private function outputEnvironmentInfo(InputInterface $input, OutputInterface $output)
     {
-        $this->displaySectionHeader($output, '🔧 ENVIRONMENT INFORMATION', 'server');
+        $this->displaySectionHeader($output, '🔧 ENVIRONMENT INFORMATION');
         
         $commands = [
             'php_version' => ['command' => 'php -v | head -n 1 && whereis php', 'icon' => '🐘', 'title' => 'PHP Version'],
@@ -95,9 +104,7 @@ class InfoCommand extends AbstractStyledCommand
     private function getCommandInfo(InputInterface $input, OutputInterface $output, $command, $description)
     {
         try {
-            $result = [];
-            $shellExecute = \Magento\Framework\App\ObjectManager::getInstance()->get(\Magento\Framework\Shell::class);
-            $response = $shellExecute->execute($command, $result);
+            $response = $this->shell->execute($command);
             
             $output->writeln("<header>  $description</>");
             $lines = explode("\n", trim($response));
@@ -146,11 +153,7 @@ class InfoCommand extends AbstractStyledCommand
     {
         $this->displaySectionHeader($output, '🎨 MAGENTO THEMES ANALYSIS');
         
-        $this->initMagento();
-
-        $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
-        $themeCollection = $objectManager->create(\Magento\Theme\Model\ResourceModel\Theme\Collection::class);
-        $themes = $themeCollection->getData();
+        $themes = $this->themeCollectionFactory->create()->getData();
 
         if (empty($themes)) {
             $output->writeln('    <fg=cyan>│</> <comment>ℹ️  No themes found</comment>');
@@ -203,25 +206,10 @@ class InfoCommand extends AbstractStyledCommand
         $this->displaySectionSeparator($output);
     }
 
-    private function initMagento()
-    {
-        try {
-            $bootstrap = Bootstrap::create(BP, $_SERVER);
-            $objectManager = $bootstrap->getObjectManager();
-            $objectManager->get(State::class)->setAreaCode('frontend');
-        } catch (LocalizedException | NoSuchEntityException $e) {
-            throw new \Exception("Unable to initialize Magento: " . $e->getMessage());
-        }
-    }
-
     private function getDatabaseInfo()
     {
         try {
-            $deploymentConfig = 
-                \Magento\Framework\App\ObjectManager::getInstance()->get(
-                    \Magento\Framework\App\DeploymentConfig::class
-                );
-            $dbConfig = (array) $deploymentConfig->get('db/connection/default');
+            $dbConfig = (array) $this->deploymentConfig->get('db/connection/default');
         } catch (\Throwable $exception) {
             $dbConfig = [];
         }
@@ -271,9 +259,7 @@ class InfoCommand extends AbstractStyledCommand
     {
         $this->displaySectionHeader($output, '🔗 ADMIN ACCESS');
         
-        $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
-        $backendUrl = $objectManager->get(\Magento\Backend\Model\UrlInterface::class);
-        $adminUrl = $backendUrl->getBaseUrl() . $backendUrl->getAreaFrontName();
+        $adminUrl = $this->backendUrl->getBaseUrl() . $this->backendUrl->getAreaFrontName();
 
         $output->writeln('    <header>🏪 Admin Panel URL:</header>');
         $output->writeln("    <fg=white>│</> <highlight>$adminUrl</highlight>");

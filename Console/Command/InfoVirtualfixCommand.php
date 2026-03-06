@@ -7,19 +7,23 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Helper\Table;
 use Magento\Framework\Console\Cli;
 use Magento\Theme\Model\ResourceModel\Theme\CollectionFactory;
+use Magento\Theme\Model\ResourceModel\Theme as ThemeResource;
 use Psr\Log\LoggerInterface;
 
 class InfoVirtualfixCommand extends AbstractStyledCommand
 {
     private CollectionFactory $collectionFactory;
+    private ThemeResource $themeResource;
     private LoggerInterface $logger;
 
     public function __construct(
         CollectionFactory $collectionFactory,
+        ThemeResource $themeResource,
         LoggerInterface $logger
     ) {
         parent::__construct();
         $this->collectionFactory = $collectionFactory;
+        $this->themeResource = $themeResource;
         $this->logger = $logger;
     }
 
@@ -95,7 +99,8 @@ class InfoVirtualfixCommand extends AbstractStyledCommand
 
         foreach ($virtualThemes as $theme) {
             $output->writeln("    <fg=cyan>│</> <comment>Fixing theme: {$theme->getThemeTitle()}</comment>");
-            $theme->setType(0)->save();
+            $theme->setType(0);
+            $this->themeResource->save($theme);
             $fixedCount++;
             $output->writeln("    <fg=green>│</> <success>✅ Theme fixed successfully</success>");
         }

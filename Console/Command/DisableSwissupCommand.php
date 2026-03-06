@@ -5,6 +5,7 @@ namespace Swissup\Diagnostic\Console\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Helper\Table;
+use Symfony\Component\Console\Question\ConfirmationQuestion;
 use Magento\Framework\Console\Cli;
 use Magento\Framework\Module\Status;
 use Magento\Framework\Module\FullModuleList;
@@ -63,6 +64,12 @@ class DisableSwissupCommand extends AbstractStyledCommand
 
             // Display modules to be disabled
             $this->displayModulesTable($output, $allSwissupModules, 'MODULES TO DISABLE');
+
+            // Confirm before disabling
+            if (!$this->confirmAction($input, $output, count($enabledModules))) {
+                $output->writeln('<fg=yellow>⚠️  Operation cancelled by user.</>');
+                return Cli::RETURN_SUCCESS;
+            }
 
             // Save current state before disabling
             $this->saveModulesState($enabledModules, $output);
@@ -181,5 +188,21 @@ class DisableSwissupCommand extends AbstractStyledCommand
         }
         
         $this->displaySectionSeparator($output);
+    }
+
+    private function confirmAction(InputInterface $input, OutputInterface $output, int $moduleCount): bool
+    {
+        if ($input->getOption('no-interaction')) {
+            return true;
+        }
+
+        /** @var \Symfony\Component\Console\Helper\QuestionHelper $helper */
+        $helper = $this->getHelper('question');
+        $question = new ConfirmationQuestion(
+            "<fg=yellow>⚠️  Are you sure you want to disable $moduleCount Swissup module(s)? [y/N] </>",
+            false
+        );
+
+        return $helper->ask($input, $output, $question);
     }
 }
