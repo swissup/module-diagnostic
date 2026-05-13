@@ -37,7 +37,7 @@ class InfoCommand extends AbstractStyledCommand
              ->setDescription('Store environment information');
     }
 
-    protected function execute(InputInterface $input, OutputInterface $output)
+    protected function execute(InputInterface $input, OutputInterface $output): int
     {
         // Initialize custom styles
         $this->initializeCustomStyles($output);

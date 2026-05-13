@@ -40,7 +40,7 @@ class DisableThirdpartyCommand extends AbstractStyledCommand
              ->setDescription('Disable all currently enabled 3rd-party modules (except Swissup_ and Magento_)');
     }
 
-    protected function execute(InputInterface $input, OutputInterface $output)
+    protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $this->initializeCustomStyles($output);
         $this->displayWelcomeBanner($output, '🔴 DISABLE 3RD-PARTY MODULES', 'Disabling All Active 3rd-party Modules');

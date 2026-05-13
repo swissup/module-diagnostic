@@ -80,7 +80,7 @@ class HintsCommand extends AbstractStyledCommand
              );
     }
 
-    protected function execute(InputInterface $input, OutputInterface $output)
+    protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $this->initializeCustomStyles($output);
         $this->displayWelcomeBanner($output, '🔍 TEMPLATE PATH HINTS', 'Enable / Disable Magento Path Hints');

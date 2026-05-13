@@ -33,7 +33,7 @@ class InfoVirtualfixCommand extends AbstractStyledCommand
              ->setDescription('Fix Virtual themes');
     }
 
-    protected function execute(InputInterface $input, OutputInterface $output)
+    protected function execute(InputInterface $input, OutputInterface $output): int
     {
         // Initialize custom styles
         $this->initializeCustomStyles($output);

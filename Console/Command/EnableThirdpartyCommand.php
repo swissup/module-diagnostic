@@ -40,7 +40,7 @@ class EnableThirdpartyCommand extends AbstractStyledCommand
              ->setDescription('Enable previously disabled 3rd-party modules (except Swissup_ and Magento_)');
     }
 
-    protected function execute(InputInterface $input, OutputInterface $output)
+    protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $this->initializeCustomStyles($output);
         $this->displayWelcomeBanner($output, '🟢 ENABLE 3RD-PARTY MODULES', 'Restoring Previously Enabled Modules');

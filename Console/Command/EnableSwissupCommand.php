@@ -40,7 +40,7 @@ class EnableSwissupCommand extends AbstractStyledCommand
              ->setDescription('Enable previously disabled Swissup modules');
     }
 
-    protected function execute(InputInterface $input, OutputInterface $output)
+    protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $this->initializeCustomStyles($output);
         $this->displayWelcomeBanner($output, '🟢 ENABLE SWISSUP MODULES', 'Restoring Previously Enabled Modules');

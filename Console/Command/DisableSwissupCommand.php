@@ -40,7 +40,7 @@ class DisableSwissupCommand extends AbstractStyledCommand
              ->setDescription('Disable all currently enabled Swissup modules');
     }
 
-    protected function execute(InputInterface $input, OutputInterface $output)
+    protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $this->initializeCustomStyles($output);
         $this->displayWelcomeBanner($output, '🔴 DISABLE SWISSUP MODULES', 'Disabling All Active Swissup Modules');

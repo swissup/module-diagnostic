@@ -90,7 +90,7 @@ class AssetsCommand extends AbstractStyledCommand
              );
     }
 
-    protected function execute(InputInterface $input, OutputInterface $output)
+    protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $this->initializeCustomStyles($output);
         $this->displayWelcomeBanner($output, '⚡ ASSETS OPTIMIZATION MANAGER', 'JS/CSS Merge & Minification Control');
