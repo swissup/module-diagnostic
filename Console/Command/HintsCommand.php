@@ -5,7 +5,6 @@ namespace Swissup\Diagnostic\Console\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
-use Symfony\Component\Console\Helper\Table;
 use Magento\Framework\Console\Cli;
 use Magento\Framework\App\Config\Storage\WriterInterface;
 use Magento\Framework\App\Config\ScopeConfigInterface;
@@ -216,17 +215,16 @@ class HintsCommand extends AbstractStyledCommand
         $output->writeln('');
 
         $settings = [
-            ['path' => self::HINTS_STOREFRONT, 'label' => '🖥️  Storefront Hints'],
-            ['path' => self::HINTS_ADMIN,      'label' => '⚙️  Admin Hints'],
-            ['path' => self::HINTS_BLOCKS,     'label' => '🧩 Block Name Hints'],
+            ['path' => self::HINTS_STOREFRONT, 'label' => 'Storefront Hints'],
+            ['path' => self::HINTS_ADMIN,      'label' => 'Admin Hints'],
+            ['path' => self::HINTS_BLOCKS,     'label' => 'Block Name Hints'],
         ];
 
-        $table = new Table($output);
+        $table = $this->createTable($output);
         $table->setHeaders(['<header>Setting</header>', '<header>Status</header>', '<header>Value</header>']);
-        $table->setStyle('box-double');
         $table->setColumnWidth(0, 25);
-        $table->setColumnWidth(1, 15);
-        $table->setColumnWidth(2, 7);
+        $table->setColumnWidth(1, 12);
+        $this->rightAlignColumns($table, 2);
 
         foreach ($settings as $setting) {
             if ($scope === ScopeConfigInterface::SCOPE_TYPE_DEFAULT) {
@@ -236,7 +234,7 @@ class HintsCommand extends AbstractStyledCommand
             }
 
             $enabled      = (bool) $value;
-            $status       = $enabled ? '<fg=green>✅ Enabled</>'  : '<fg=red>❌ Disabled</>';
+            $status       = $enabled ? '<fg=green>Enabled</>'  : '<fg=red>Disabled</>';
             $valueDisplay = $enabled ? '<fg=green>1</>' : '<fg=red>0</>';
 
             $table->addRow([

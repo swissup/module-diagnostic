@@ -5,9 +5,47 @@ namespace Swissup\Diagnostic\Console\Command;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Formatter\OutputFormatterStyle;
+use Symfony\Component\Console\Helper\Table;
+use Symfony\Component\Console\Helper\TableStyle;
 
 abstract class AbstractStyledCommand extends Command
 {
+    /**
+     * Build a table with the shared visual style.
+     *
+     * Keep emoji out of data cells: Symfony measures cell width with
+     * mb_strwidth(), which disagrees with how terminals actually render emoji
+     * (especially variation-selector glyphs like 🗜️ / 🏷️), so emoji in cells
+     * make columns ragged. Emoji belong in section headers/banners, not cells.
+     *
+     * @param OutputInterface $output
+     * @return Table
+     */
+    protected function createTable(OutputInterface $output): Table
+    {
+        $table = new Table($output);
+        $table->setStyle('box-double');
+
+        return $table;
+    }
+
+    /**
+     * Right-align the given (zero-based) columns - tidier for numeric values.
+     *
+     * @param Table $table
+     * @param int ...$columns
+     * @return void
+     */
+    protected function rightAlignColumns(Table $table, int ...$columns): void
+    {
+        $style = new TableStyle();
+        $style->setPadType(STR_PAD_LEFT);
+
+        foreach ($columns as $column) {
+            $table->setColumnStyle($column, $style);
+        }
+    }
+
     /**
      * Initialize custom output styles for consistent formatting
      *

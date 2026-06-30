@@ -4,10 +4,10 @@ namespace Swissup\Diagnostic\Console\Command;
 
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
-use Symfony\Component\Console\Helper\Table;
 use Magento\Framework\Console\Cli;
 use Magento\Framework\Shell;
 use Magento\Framework\App\DeploymentConfig;
+use Magento\Framework\App\ProductMetadataInterface;
 use Magento\Backend\Model\UrlInterface as BackendUrlInterface;
 use Magento\Theme\Model\ResourceModel\Theme\CollectionFactory as ThemeCollectionFactory;
 
@@ -15,18 +15,21 @@ class InfoCommand extends AbstractStyledCommand
 {
     private Shell $shell;
     private DeploymentConfig $deploymentConfig;
+    private ProductMetadataInterface $productMetadata;
     private BackendUrlInterface $backendUrl;
     private ThemeCollectionFactory $themeCollectionFactory;
 
     public function __construct(
         Shell $shell,
         DeploymentConfig $deploymentConfig,
+        ProductMetadataInterface $productMetadata,
         BackendUrlInterface $backendUrl,
         ThemeCollectionFactory $themeCollectionFactory
     ) {
         parent::__construct();
         $this->shell = $shell;
         $this->deploymentConfig = $deploymentConfig;
+        $this->productMetadata = $productMetadata;
         $this->backendUrl = $backendUrl;
         $this->themeCollectionFactory = $themeCollectionFactory;
     }
@@ -61,19 +64,40 @@ class InfoCommand extends AbstractStyledCommand
     private function outputEnvironmentInfo(InputInterface $input, OutputInterface $output)
     {
         $this->displaySectionHeader($output, '🔧 ENVIRONMENT INFORMATION');
-        
-        $commands = [
-            'php_version' => ['command' => 'php -v | head -n 1 && whereis php', 'icon' => '🐘', 'title' => 'PHP Version'],
-            'magento_version' => ['command' => 'php bin/magento --version', 'icon' => '🛍️', 'title' => 'Magento Version'],
-            'composer_version' => ['command' => 'composer --version && whereis composer', 'icon' => '📦', 'title' => 'Composer Version'],
-            'nginx_user' => ['command' => 'whoami', 'icon' => '👤', 'title' => 'System User'],
-        ];
 
-        foreach ($commands as $key => $data) {
-            $this->getCommandInfo($input, $output, $data['command'], $data['icon'] . ' ' . $data['title']);
-        }
-        
+        // PHP version and binary path - read in-process (portable, no shell needed)
+        $this->displayInfo($output, '🐘 PHP Version', [
+            'PHP ' . PHP_VERSION,
+            'Binary: ' . PHP_BINARY,
+        ]);
+
+        // Magento version - read from framework metadata instead of spawning a
+        // second `bin/magento` bootstrap (slow and fragile under CLI)
+        $this->displayInfo($output, '🛍️ Magento Version', [
+            $this->productMetadata->getName() . ' '
+                . $this->productMetadata->getEdition() . ', version '
+                . $this->productMetadata->getVersion(),
+        ]);
+
+        // Composer is a genuinely external tool - still queried via shell
+        $this->getCommandInfo($input, $output, 'composer --version', '📦 Composer Version');
+
+        // Current system user - read in-process (portable, no shell needed)
+        $this->displayInfo($output, '👤 System User', [$this->getSystemUser()]);
+
         $this->displaySectionSeparator($output);
+    }
+
+    private function getSystemUser(): string
+    {
+        if (function_exists('posix_geteuid') && function_exists('posix_getpwuid')) {
+            $info = posix_getpwuid(posix_geteuid());
+            if (!empty($info['name'])) {
+                return $info['name'];
+            }
+        }
+
+        return get_current_user() ?: 'unknown';
     }
 
     private function checkClientOverrides(OutputInterface $output)
@@ -105,21 +129,33 @@ class InfoCommand extends AbstractStyledCommand
     {
         try {
             $response = $this->shell->execute($command);
-            
-            $output->writeln("<header>  $description</>");
-            $lines = explode("\n", trim($response));
-            foreach ($lines as $line) {
-                if (trim($line)) {
-                    $output->writeln("    <fg=white>│</> <comment>" . trim($line) . "</comment>");
-                }
-            }
-            $output->writeln('');
+            $this->displayInfo($output, $description, explode("\n", trim($response)));
 
             return Cli::RETURN_SUCCESS;
         } catch (\Exception $e) {
             $output->writeln("    <fg=red>│</> <fg=red>❌ Error running \"$command\" command</>");
             return Cli::RETURN_FAILURE;
         }
+    }
+
+    /**
+     * Render a titled info block with one indented line per entry.
+     *
+     * @param OutputInterface $output
+     * @param string $description
+     * @param string[] $lines
+     * @return void
+     */
+    private function displayInfo(OutputInterface $output, string $description, array $lines): void
+    {
+        $output->writeln("<header>  $description</>");
+        foreach ($lines as $line) {
+            $line = trim($line);
+            if ($line !== '') {
+                $output->writeln("    <fg=white>│</> <comment>$line</comment>");
+            }
+        }
+        $output->writeln('');
     }
 
     private function isFolderEmpty($folderPath)
@@ -161,35 +197,31 @@ class InfoCommand extends AbstractStyledCommand
             return;
         }
 
-        $table = new Table($output);
+        $table = $this->createTable($output);
         $table->setHeaders([
-            '<header>ID</header>', 
-            '<header>Parent ID</header>', 
-            '<header>Theme Title</header>', 
+            '<header>ID</header>',
+            '<header>Parent ID</header>',
+            '<header>Theme Title</header>',
             '<header>Type</header>',
             '<header>Status</header>'
         ]);
-        $table->setStyle('box-double');
-        $table->setColumnWidth(0, 4);
-        $table->setColumnWidth(1, 11);
         $table->setColumnWidth(2, 25);
-        $table->setColumnWidth(3, 6);
-        $table->setColumnWidth(4, 13);
+        $this->rightAlignColumns($table, 0, 1, 3);
 
         $virtualThemesCount = 0;
         foreach ($themes as $theme) {
             $isVirtual = $theme['type'] == 1;
             if ($isVirtual) $virtualThemesCount++;
-            
-            $statusIcon = $isVirtual ? '❌ Virtual' : '✅ Physical';
+
+            $status = $isVirtual ? 'Virtual' : 'Physical';
             $style = $isVirtual ? 'fg=red' : 'fg=green';
-            
+
             $table->addRow([
                 "<$style>{$theme['theme_id']}</$style>",
                 "<$style>" . ($theme['parent_id'] ?: 'N/A') . "</$style>",
                 "<$style>{$theme['theme_title']}</$style>",
                 "<$style>{$theme['type']}</$style>",
-                "<$style>$statusIcon</$style>"
+                "<$style>$status</$style>"
             ]);
         }
 
@@ -229,18 +261,17 @@ class InfoCommand extends AbstractStyledCommand
         $dbInfo = $this->getDatabaseInfo();
         
         $dbData = [
-            ['🏷️  Database Name', $dbInfo['dbname']],
-            ['👤  Username', $dbInfo['username']],
-            ['🌐  Host', $dbInfo['host']],
-            ['🔑  Password', $dbInfo['password']]
+            ['Database Name', $dbInfo['dbname']],
+            ['Username', $dbInfo['username']],
+            ['Host', $dbInfo['host']],
+            ['Password', $dbInfo['password']]
         ];
-        
-        $table = new Table($output);
+
+        $table = $this->createTable($output);
         $table->setHeaders(['<header>Property</header>', '<header>Value</header>']);
-        $table->setStyle('box-double');
         $table->setColumnWidth(0, 20);
         $table->setColumnWidth(1, 25);
-        
+
         foreach ($dbData as $row) {
             $table->addRow(["<fg=cyan>{$row[0]}</>", "<comment>{$row[1]}</comment>"]);
         }

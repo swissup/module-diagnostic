@@ -5,7 +5,6 @@ namespace Swissup\Diagnostic\Console\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
-use Symfony\Component\Console\Helper\Table;
 use Magento\Framework\Console\Cli;
 use Magento\Framework\App\Config\Storage\WriterInterface;
 use Magento\Framework\App\Config\ScopeConfigInterface;
@@ -199,27 +198,26 @@ class AssetsCommand extends AbstractStyledCommand
         $output->writeln('');
 
         $settings = [
-            ['path' => self::MERGE_CSS, 'label' => '📦 CSS Merge', 'icon' => '🎨'],
-            ['path' => self::MINIFY_CSS, 'label' => '🗜️  CSS Minification', 'icon' => '🎨'],
-            ['path' => self::MERGE_JS, 'label' => '📦 JS Merge', 'icon' => '⚡'],
-            ['path' => self::MINIFY_JS, 'label' => '🗜️  JS Minification', 'icon' => '⚡'],
-            ['path' => self::ENABLE_JS_BUNDLING, 'label' => '📦 JS Bundling', 'icon' => '⚡'],
-            ['path' => self::MINIFY_HTML, 'label' => '🗜️  HTML Minification', 'icon' => '📄'],
+            ['path' => self::MERGE_CSS, 'label' => 'CSS Merge'],
+            ['path' => self::MINIFY_CSS, 'label' => 'CSS Minification'],
+            ['path' => self::MERGE_JS, 'label' => 'JS Merge'],
+            ['path' => self::MINIFY_JS, 'label' => 'JS Minification'],
+            ['path' => self::ENABLE_JS_BUNDLING, 'label' => 'JS Bundling'],
+            ['path' => self::MINIFY_HTML, 'label' => 'HTML Minification'],
         ];
 
-        $table = new Table($output);
+        $table = $this->createTable($output);
         $table->setHeaders(['<header>Setting</header>', '<header>Status</header>', '<header>Value</header>']);
-        $table->setStyle('box-double');
         $table->setColumnWidth(0, 25);
-        $table->setColumnWidth(1, 15);
-        $table->setColumnWidth(2, 7);
+        $table->setColumnWidth(1, 12);
+        $this->rightAlignColumns($table, 2);
 
         foreach ($settings as $setting) {
             $value = $this->scopeConfig->getValue($setting['path'], ScopeInterface::SCOPE_STORE);
             $enabled = (bool) $value;
-            $status = $enabled ? '<fg=green>✅ Enabled</>' : '<fg=red>❌ Disabled</>';
+            $status = $enabled ? '<fg=green>Enabled</>' : '<fg=red>Disabled</>';
             $valueDisplay = $enabled ? '<fg=green>1</>' : '<fg=red>0</>';
-            
+
             $table->addRow([
                 "<comment>{$setting['label']}</comment>",
                 $status,

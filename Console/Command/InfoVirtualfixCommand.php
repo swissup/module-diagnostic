@@ -4,7 +4,6 @@ namespace Swissup\Diagnostic\Console\Command;
 
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
-use Symfony\Component\Console\Helper\Table;
 use Magento\Framework\Console\Cli;
 use Magento\Theme\Model\ResourceModel\Theme\CollectionFactory;
 use Magento\Theme\Model\ResourceModel\Theme as ThemeResource;
@@ -70,18 +69,16 @@ class InfoVirtualfixCommand extends AbstractStyledCommand
         $output->writeln("    <warning>⚠️  Found $virtualCount virtual theme(s) that need fixing:</warning>");
         $output->writeln('');
         
-        $table = new Table($output);
+        $table = $this->createTable($output);
         $table->setHeaders(['<header>ID</header>', '<header>Theme Title</header>', '<header>Status</header>']);
-        $table->setStyle('box-double');
-        $table->setColumnWidth(0, 4);
         $table->setColumnWidth(1, 25);
-        $table->setColumnWidth(2, 13);
-        
+        $this->rightAlignColumns($table, 0);
+
         foreach ($virtualThemes as $theme) {
             $table->addRow([
                 '<fg=red>' . $theme->getId() . '</>',
                 '<fg=red>' . $theme->getThemeTitle() . '</>',
-                '<fg=red>❌ Virtual</>'
+                '<fg=red>Virtual</>'
             ]);
         }
         
